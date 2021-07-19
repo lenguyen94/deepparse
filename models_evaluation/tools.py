@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 import pandas as pd
 import pycountry
@@ -168,31 +169,99 @@ def make_table_rst(data_type: str, root_path: str = "."):
         file.writelines(string)
 
 
-def make_comparison_table(results_a_file_name: str, results_b_file_name: str, root_path: str = "."):
+def make_comparison_table(results_files_name: List[str], table_name_suffix: str = "training", zero_shot: bool = False):
     """
     Function to generate an Markdown table
     """
     table_dir = os.path.join("tables", "comparison")
     os.makedirs(table_dir, exist_ok=True)
 
-    model_a_res = json.load(open(os.path.join(root_path, results_a_file_name), "r"))
-    model_b_res = json.load(open(os.path.join(root_path, results_b_file_name), "r"))
+    models_res = [json.load(open(file_name, "r")) for file_name in results_files_name]
 
-    formatted_data = []
+    formatted_data = {
+        "Finland": [],
+        "Canada": [],
+        "South Korea": [],
+        "United Kingdom": [],
+        "Switzerland": [],
+        "Italy": [],
+        "Brazil": [],
+        "France": [],
+        "Denmark": [],
+        "Norway": [],
+        "Netherlands": [],
+        "Germany": [],
+        "Russia": [],
+        "Mexico": [],
+        "Czechia": [],
+        "Australia": [],
+        "Austria": [],
+        "Spain": [],
+        "United States": [],
+        "Poland": []
+    }
+    if zero_shot:
+        formatted_data = {
+            "India": [],
+            "Portugal": [],
+            "Ireland": [],
+            "Uzbekistan": [],
+            "Slovakia": [],
+            "Japan": [],
+            "Faroe Islands": [],
+            "Slovenia": [],
+            "Hungary": [],
+            "Venezuela": [],
+            "Bermuda": [],
+            "Argentina": [],
+            "Colombia": [],
+            "Cyprus": [],
+            "Belarus": [],
+            "Bulgaria": [],
+            "Estonia": [],
+            "Algeria": [],
+            "Philippines": [],
+            "Réunion": [],
+            "Malaysia": [],
+            "New Caledonia": [],
+            "Lithuania": [],
+            "Bosnia": [],
+            "Bangladesh": [],
+            "Sweden": [],
+            "New Zealand": [],
+            "Serbia": [],
+            "Latvia": [],
+            "Romania": [],
+            "Paraguay": [],
+            "Belgium": [],
+            "Kazakhstan": [],
+            "South Africa": [],
+            "Indonesia": [],
+            "Moldova": [],
+            "Iceland": [],
+            "Singapore": [],
+            "Croatia": [],
+            "Greece": [],
+            "Ukraine": []
+        }
+    for model_res in models_res:
+        for country, res in model_res.items():
+            country_data = formatted_data.get(country)
+            country_data.append(res)
+    table_data = []
     # we format the data to have two pairs of columns for a less long table
-    for idx, ((country, fasttext_res), (_, bpemb_res)) in enumerate(zip(model_a_res.items(), model_b_res.items())):
+    for idx, (country, res) in enumerate(formatted_data.items()):
         if idx % 2 and idx != 0:
-            data.extend([country, fasttext_res, bpemb_res])
-            formatted_data.append(data)
+            data.extend([country, *res])
+            table_data.append(data)
         else:
-            data = [country, fasttext_res, bpemb_res]
-            if idx == 40:
-                formatted_data.append(data)
-    table = pd.DataFrame(formatted_data,
-                         columns=["Country", r"Model A (%)", r"Model B (%)", "Country", r"Model A (%)",
-                                  r"Model B (%)"]).round(2).to_markdown(index=False)
+            data = [country, *res]
+            if idx == 2 * len(formatted_data.items()):
+                table_data.append(data)
 
-    with open(os.path.join(table_dir, f"{results_a_file_name}_vs_{results_b_file_name}_table.md"),
-              "w",
-              encoding="utf-8") as file:
+    model_names = [fr"Model {idx} (%)" for idx in range(len(results_files_name))]
+    table = pd.DataFrame(table_data,
+                         columns=["Country", *model_names, "Country", *model_names]).round(2).to_markdown(index=False)
+
+    with open(os.path.join(table_dir, f"{table_name_suffix}_comparison_table.md"), "w", encoding="utf-8") as file:
         file.writelines(table)
