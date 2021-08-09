@@ -260,8 +260,9 @@ def make_comparison_table(results_files_name: List[str], table_name_suffix: str 
                 table_data.append(data)
 
     model_names = [fr"Model {idx} (%)" for idx in range(len(results_files_name))]
-    table = pd.DataFrame(table_data,
-                         columns=["Country", *model_names, "Country", *model_names]).round(2).to_markdown(index=False)
+    df = pd.DataFrame(table_data,
+                         columns=["Country", *model_names, "Country", *model_names]).round(2)
+    table = df.to_markdown(index=False)
 
     with open(os.path.join(table_dir, f"{table_name_suffix}_comparison_table.md"), "w", encoding="utf-8") as file:
         file.writelines(table)
