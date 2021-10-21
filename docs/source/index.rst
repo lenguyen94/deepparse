@@ -24,7 +24,8 @@ Use deepparse to
 
 - use the pre-trained models to parse multinational addresses,
 - retrain our pre-trained models on new data to parse multinational addresses,
-- retrain our pre-trained models with your own prediction tags easily.
+- retrain our pre-trained models with your own prediction tags easily,
+- retrain a new seq2seq addresses parsing models easily.
 
 Deepparse is compatible with the **latest version of PyTorch** and  **Python >= 3.7**.
 
@@ -456,6 +457,7 @@ API Reference
 
   parser
   dataset_container
+  comparer
 
 .. toctree::
   :glob:
@@ -465,6 +467,7 @@ API Reference
   examples/fine_tuning
   examples/parse_addresses
   examples/retrain_with_new_prediction_tags
+  examples/retrain_with_new_seq2seq_params
 
 Indices and tables
 ==================

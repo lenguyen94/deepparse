@@ -2,13 +2,11 @@
 # pylint: disable=not-callable, too-many-public-methods, no-name-in-module
 
 import os
-import shutil
 from unittest.mock import Mock
 
 import torch
 from torch import tensor
 
-from deepparse.parser import nll_loss, accuracy
 from tests.base_capture_output import CaptureOutputTestCase
 
 
@@ -32,11 +30,6 @@ class AddressParserPredictTestCase(CaptureOutputTestCase):
         cls.a_street_number = "15"
 
         cls.a_logging_path = "data"
-
-    def tearDown(self) -> None:
-        # cleanup after the tests
-        if os.path.exists(self.a_model_root_path):
-            shutil.rmtree(self.a_model_root_path)
 
     def setUp(self):
         # a prediction vector with real values
@@ -70,9 +63,6 @@ class AddressParserPredictTestCase(CaptureOutputTestCase):
                  -2.7060e-05
              ]]])
 
-        self.a_loss_function = nll_loss
-        self.a_list_of_batch_metrics = [accuracy]
-
         # to create the dirs for dumping the prediction tags since we mock Poutyne that usually will do it
         os.makedirs(self.a_logging_path, exist_ok=True)
 
@@ -95,6 +85,17 @@ class AddressParserPredictTestCase(CaptureOutputTestCase):
                 "another_key": 2
             },
             "prediction_tags": address_components,
+            "model_type": model_type
+        }
+        torch.save(data_dict, self.a_model_path)
+
+    def setup_retrain_new_params_model(self, seq2seq_params, model_type):
+        data_dict = {
+            "address_tagger_model": {
+                "a_key": 1,
+                "another_key": 2
+            },
+            "seq2seq_params": seq2seq_params,
             "model_type": model_type
         }
         torch.save(data_dict, self.a_model_path)

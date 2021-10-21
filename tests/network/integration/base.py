@@ -2,7 +2,7 @@
 # pylint: disable=not-callable
 import os
 import pickle
-import shutil
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 import torch
@@ -19,19 +19,23 @@ class Seq2SeqIntegrationTestCase(TestCase):
         cls.a_cpu_device = torch.device("cpu")
         cls.begin_of_sequence_idx = -1  # BOS
         cls.encoder_hidden_size = 1024
+        cls.decoder_hidden_size = 1024
+        cls.input_size = 300
+        cls.num_layers = 1
 
         cls.number_of_tags = 9  # default tag space of our models
         cls.a_target_vector = torch.tensor([[0, 1, 1, 4, 5, 8], [1, 0, 3, 8, 0, 0]], device=cls.a_torch_device)
 
         cls.output_size = 9
 
-        cls.weights_dir = "./weights"
+        cls.temp_dir_obj = TemporaryDirectory()
+        cls.weights_dir = os.path.join(cls.temp_dir_obj.name, "./weights")
 
         download_from_url(file_name="to_predict_bpemb", saving_dir=cls.weights_dir, file_extension="p")
         download_from_url(file_name="to_predict_fasttext", saving_dir=cls.weights_dir, file_extension="p")
         download_from_url(file_name="decoder_hidden", saving_dir=cls.weights_dir, file_extension="p")
 
-        cls.path = os.path.join(os.path.expanduser("~"), ".cache", "deepparse")
+        cls.path = os.path.join(cls.temp_dir_obj.name, ".cache", "deepparse")
         cls.retrain_file_name_format = "retrained_{}_address_parser"
 
     @classmethod
@@ -46,13 +50,7 @@ class Seq2SeqIntegrationTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        if os.path.exists(cls.weights_dir):
-            shutil.rmtree(cls.weights_dir)
-
-    @classmethod
-    def models_tear_down(cls, model: str) -> str:
-        os.remove(os.path.join(cls.path, model + ".ckpt"))
-        os.remove(os.path.join(cls.path, cls.retrain_file_name_format.format(model) + ".ckpt"))
+        cls.temp_dir_obj.cleanup()
 
     def encoder_input_setUp(self, model_type: str, device: torch.device):
         with open(os.path.join(self.weights_dir, f"to_predict_{model_type}.p"), "rb") as file:

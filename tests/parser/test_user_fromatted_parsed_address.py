@@ -5,7 +5,7 @@ import sys
 import unittest
 from unittest import TestCase
 
-from deepparse.parser import FormattedParsedAddress, formated_parsed_address
+from deepparse.parser import FormattedParsedAddress, formatted_parsed_address
 
 
 class UserFormattedParsedAddressTest(TestCase):
@@ -18,7 +18,7 @@ class UserFormattedParsedAddressTest(TestCase):
         cls.a_address = {cls.a_address_str: cls.a_parsed_address}
         cls.a_existing_tag = "3"
 
-        cls.a_parsed_address_in_dict_format = {'ALastTag': None, 'ATag': '3', 'AnotherTag': 'test road'}
+        cls.a_parsed_address_in_dict_format = {"ALastTag": None, "ATag": "3", "AnotherTag": "test road"}
 
     def _capture_output(self):
         self.test_out = io.StringIO()
@@ -27,7 +27,7 @@ class UserFormattedParsedAddressTest(TestCase):
 
     def setUp(self):
         # We set the FIELDS of the address base on the prediction tags
-        formated_parsed_address.FIELDS = ["ATag", "AnotherTag", "ALastTag"]
+        formatted_parsed_address.FIELDS = ["ATag", "AnotherTag", "ALastTag"]
 
         self.parsed_address = FormattedParsedAddress(self.a_address)
 
@@ -72,7 +72,7 @@ class UserFormattedParsedAddressTest(TestCase):
 
     def test_whenToDictUserFields_thenReturnTheProperDict(self):
         actual = self.parsed_address.to_dict(fields=["ATag"])
-        expected = {'ATag': '3'}
+        expected = {"ATag": "3"}
         self.assertEqual(actual, expected)
 
     def test_whenFormattedAddressUpperCaseFields_thenReturnAddressWithFieldsUpperCase(self):
@@ -98,7 +98,7 @@ class UserFormattedParsedAddressTest(TestCase):
         another_address = {a_different_address_str: an_address_with_different_components_tags}
 
         # We reset the FIELDS of the address to default values since we change it in setup
-        formated_parsed_address.FIELDS = [
+        formatted_parsed_address.FIELDS = [
             "StreetNumber", "Unit", "StreetName", "Orientation", "Municipality", "Province", "PostalCode",
             "GeneralDelivery"
         ]

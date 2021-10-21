@@ -20,11 +20,6 @@ class FastTextSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
         cls.models_setup(model="fasttext")
         cls.a_retrain_model_path = os.path.join(cls.path, cls.retrain_file_name_format.format("fasttext") + ".ckpt")
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        super(FastTextSeq2SeqIntegrationTest, cls).tearDownClass()
-        cls.models_tear_down(model="fasttext")
-
     def setUp(self) -> None:
         super().setUp()
         # will load the weights if not local
@@ -33,8 +28,8 @@ class FastTextSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
         self.a_target_vector = torch.tensor([[0, 1, 1, 4, 5, 8], [1, 0, 3, 8, 0, 0]], device=self.a_torch_device)
 
     def test_whenForwardStep_thenStepIsOk(self):
-        self.seq2seq_model = FastTextSeq2SeqModel(self.a_torch_device, self.number_of_tags)
-        # forward pass for two address: '['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']'
+        self.seq2seq_model = FastTextSeq2SeqModel(self.a_torch_device, output_size=self.number_of_tags)
+        # forward pass for two address: "['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']"
         self.decoder_input_setUp()
 
         predictions = self.seq2seq_model.forward(self.to_predict_tensor, self.a_lengths_tensor)
@@ -42,8 +37,8 @@ class FastTextSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
         self.assert_output_is_valid_dim(predictions, output_dim=self.number_of_tags)
 
     def test_whenForwardStepWithTarget_thenStepIsOk(self):
-        self.seq2seq_model = FastTextSeq2SeqModel(self.a_torch_device, self.number_of_tags)
-        # forward pass for two address: '['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']'
+        self.seq2seq_model = FastTextSeq2SeqModel(self.a_torch_device, output_size=self.number_of_tags)
+        # forward pass for two address: "['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']"
         self.decoder_input_setUp()
 
         predictions = self.seq2seq_model.forward(self.to_predict_tensor, self.a_lengths_tensor, self.a_target_vector)
@@ -52,8 +47,8 @@ class FastTextSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
 
     def test_retrainedModel_whenForwardStep_thenStepIsOk(self):
         self.seq2seq_model = FastTextSeq2SeqModel(self.a_torch_device,
-                                                  self.re_trained_output_dim,
-                                                  self.verbose,
+                                                  output_size=self.re_trained_output_dim,
+                                                  verbose=self.verbose,
                                                   path_to_retrained_model=self.a_retrain_model_path)
         # forward pass for two address: '['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']'
         self.decoder_input_setUp()
@@ -64,8 +59,8 @@ class FastTextSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
 
     def test_retrainedModel_whenForwardStepWithTarget_thenStepIsOk(self):
         self.seq2seq_model = FastTextSeq2SeqModel(self.a_torch_device,
-                                                  self.re_trained_output_dim,
-                                                  self.verbose,
+                                                  output_size=self.re_trained_output_dim,
+                                                  verbose=self.verbose,
                                                   path_to_retrained_model=self.a_retrain_model_path)
         # forward pass for two address: '['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']'
         self.decoder_input_setUp()

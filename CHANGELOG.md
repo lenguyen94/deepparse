@@ -92,6 +92,25 @@
 - Added method to specify the format of address components of an `FormattedParsedAddress`. Formatting can specify the
   field separator, the field to be capitalized, and the field to be upper case.
 
-## dev
+## 0.4.2
 
 - Added `__eq__` method to `FormattedParsedAddress`.
+- Improved device management.
+- Improved testing.
+
+## 0.4.3
+
+- Fixed typos in one of file name.
+- Added tools to compare addresses (tagged or not).
+- Fixed some tests errors.
+
+## 0.4.4
+
+- Fixed import error.
+
+## 0.5
+
+- Added Python 3.9
+- Added feature to allow a more flexible way to retrain
+- Added a feature to allow retrain of a new seq2seq architecture
+- Fixed prediction tags bug when parsing with new tags after retraining

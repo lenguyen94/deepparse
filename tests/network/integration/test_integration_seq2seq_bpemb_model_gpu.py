@@ -20,11 +20,6 @@ class BPEmbSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
         cls.models_setup(model="bpemb")
         cls.a_retrain_model_path = os.path.join(cls.path, cls.retrain_file_name_format.format("bpemb") + ".ckpt")
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        super(BPEmbSeq2SeqIntegrationTest, cls).tearDownClass()
-        cls.models_tear_down(model="bpemb")
-
     def setUp(self) -> None:
         # will load the weights if not local
         self.encoder_input_setUp("bpemb", self.a_torch_device)
@@ -54,8 +49,8 @@ class BPEmbSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
 
     def test_retrainedModel_whenForwardStep_thenStepIsOk(self):
         self.seq2seq_model = BPEmbSeq2SeqModel(self.a_torch_device,
-                                               self.re_trained_output_dim,
-                                               self.verbose,
+                                               output_size=self.re_trained_output_dim,
+                                               verbose=self.verbose,
                                                path_to_retrained_model=self.a_retrain_model_path)
         # forward pass for two address: '['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']'
         self.decoder_input_setUp()
@@ -67,8 +62,8 @@ class BPEmbSeq2SeqIntegrationTest(Seq2SeqIntegrationTestCase):
 
     def test_retrainedModel_whenForwardStepWithTarget_thenStepIsOk(self):
         self.seq2seq_model = BPEmbSeq2SeqModel(self.a_torch_device,
-                                               self.re_trained_output_dim,
-                                               self.verbose,
+                                               output_size=self.re_trained_output_dim,
+                                               verbose=self.verbose,
                                                path_to_retrained_model=self.a_retrain_model_path)
         # forward pass for two address: '['15 major st london ontario n5z1e1', '15 major st london ontario n5z1e1']'
         self.decoder_input_setUp()
