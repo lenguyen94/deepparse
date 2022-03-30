@@ -235,7 +235,7 @@ class CSVDatasetContainer(DatasetContainer):
             csv_reader_kwargs = {}
         csv_reader_kwargs = {
             "filepath_or_buffer": data_path,
-            "sep": separator,
+            # "sep": separator,
             "encoding": "utf-8",
             **csv_reader_kwargs,
         }
