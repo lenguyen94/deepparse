@@ -144,3 +144,7 @@ deepparse/version.py
 *.ckpt
 
 *mlruns/
+
+#extra
+data/
+checkpoints/
