@@ -216,7 +216,7 @@ class CSVDatasetContainer(DatasetContainer):
         data_path: str,
         column_names: Union[List, str],
         is_training_container: bool = True,
-        separator: str = "\t",
+        # separator: str = "\t",
         tag_seperator_reformat_fn: Union[None, Callable] = None,
         csv_reader_kwargs: Union[None, Dict] = None,
     ) -> None:

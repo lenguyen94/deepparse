@@ -1,8 +1,10 @@
+
 import contextlib
 import os
 import re
 import warnings
 from typing import List, Union, Dict, Tuple
+from packaging import version
 
 import poutyne
 import torch
@@ -545,7 +547,7 @@ class AddressParser:
 
         try:
             with_capturing_context = False
-            if float(".".join(str(poutyne.version.__version__).split(".")[:2])) < 1.8:
+            if version.parse(poutyne.version.__version__) > version.parse("1.8"):
                 print(
                     "You are using a older version of Poutyne that does not support properly error management."
                     " Due to that, we cannot show retrain progress. To fix that, update Poutyne to "
