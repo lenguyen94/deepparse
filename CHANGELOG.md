@@ -175,7 +175,7 @@
 ## 0.7
 
 - Improved CLI
-- Fixed bug in cli export dataset
+- Fixed bug in CLI export dataset
 - Improved the doc of the CLI
 
 ## 0.7.1
@@ -186,5 +186,15 @@
 ## 0.7.2
 
 - Added JSON output support
-- Add logging output of parse cli function
+- Add logging output of parse CLI function
 - Hotfix Poutyne version handling
+
+## 0.7.3
+- Add freeze layers parameters to freeze layers during retraining
+
+## 0.7.4
+- Improve parsed address print
+- Bug-fix #124: comma-separated list without whitespace in CSVDatasetContainer
+- Add a report when addresses to parse and tags list len differ
+- Add an example on how to fine-tune using our CSVDatasetContainer
+- Improve data validation for data to parse

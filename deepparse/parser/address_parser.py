@@ -24,6 +24,7 @@ from .tools import (
     get_address_parser_in_directory,
     indices_splitting,
     handle_model_name,
+    infer_model_type,
 )
 from .. import validate_data_to_parse
 from ..converter import TagsConverter
@@ -209,8 +210,10 @@ class AddressParser:
                 # We change the FIELDS for the FormattedParsedAddress
                 fields = list(tags_to_idx)
 
-            # We "infer" the model type
-            model_type = checkpoint_weights.get("model_type")
+            # We "infer" the model type, thus we also had to handle the attention_mechanism bool
+            model_type, attention_mechanism = infer_model_type(
+                checkpoint_weights, attention_mechanism=attention_mechanism
+            )
 
         formatted_parsed_address.FIELDS = fields
         self.tags_converter = TagsConverter(tags_to_idx)
@@ -278,6 +281,9 @@ class AddressParser:
                 # It can also output the prob of the predictions
                 parse_address = address_parser("350 rue des Lilas Ouest Quebec city Quebec G1L 1B6",
                                                with_prob=True)
+
+                # Print the parsed address
+                print(parsed_address)
 
             Using a larger batch size
 
@@ -352,6 +358,7 @@ class AddressParser:
         disable_tensorboard: bool = True,
         prediction_tags: Union[Dict, None] = None,
         seq2seq_params: Union[Dict, None] = None,
+        layers_to_freeze: Union[str, None] = None,
     ) -> List[Dict]:
         # pylint: disable=too-many-arguments, line-too-long, too-many-locals, too-many-branches, too-many-statements
         """
@@ -400,6 +407,21 @@ class AddressParser:
                     - The number of ``encoder_num_layers`` of the encoder. The default value is 1.
                     - The size of the ``decoder_hidden_size`` of the decoder. The default value is 1024.
                     - The number of ``decoder_num_layers`` of the decoder. The default value is 1.
+                Default is None, meaning we use the default seq2seq architecture.
+            layers_to_freeze (Union[str, None]): Name of the portion of the seq2seq to freeze layers,
+                thus reducing the number of parameters to learn. Will be ignored if ``seq2seq_params`` is not None.
+                Possible freezing settings are:
+
+                    - ``None``: No layers are frozen.
+                    - 'encoder': To freeze the encoder part of the seq2seq. That is the part that encodes the address
+                    into a more dense representation.
+                    - 'decoder': To freeze the decoder part of the seq2seq. That is the part that decodes a dense
+                    address representation.
+                    - 'prediction_layer': To freeze the last layer that predicts a tag class (i.e. a fully connected
+                    with an output size of the same length as the prediction tags).
+                    - 'seq2seq': To freeze the encoder and decoder but **not** the prediction layer.
+
+               Default is ``None``, meaning we do not freeze any layers.
 
         Return:
             A list of dictionary with the best epoch stats (see `Experiment class
@@ -435,6 +457,16 @@ class AddressParser:
                 container = PickleDatasetContainer(data_path)
 
                 address_parser.retrain(container, 0.8, epochs=1, batch_size=128)
+
+            Using the freezing layers parameters to freeze layers during training
+
+            .. code-block:: python
+
+                address_parser = AddressParser(device=0)
+                data_path = 'path_to_a_csv_dataset.p'
+
+                container = CSVDatasetContainer(data_path)
+                address_parser.retrain(container, 0.8, epochs=5, batch_size=128, layers_to_freeze="encoder")
 
             Using learning rate scheduler callback.
 
@@ -533,6 +565,10 @@ class AddressParser:
         train_generator, valid_generator = self._create_training_data_generator(
             dataset_container, train_ratio, batch_size, num_workers, seed=seed
         )
+
+        if layers_to_freeze is not None and seq2seq_params is None:
+            # We ignore the layers to freeze if seq2seq_params is not None
+            self._freeze_model_params(layers_to_freeze)
 
         optimizer = SGD(self.model.parameters(), learning_rate)
 
@@ -899,3 +935,42 @@ class AddressParser:
                 disable_tensorboard=disable_tensorboard,
             )
         return train_res
+
+    def _freeze_model_params(self, layers_to_freeze: Union[str]) -> None:
+        layers_to_freeze = layers_to_freeze.lower()
+        if layers_to_freeze not in ["encoder", "decoder", "prediction_layer", "seq2seq"]:
+            raise ValueError(
+                f"{layers_to_freeze} freezing setting is not supported. Value can be 'encoder', 'decoder', "
+                f"'prediction_layer' and 'seq2seq'. See doc for more details."
+            )
+        layer_exclude = None
+        if layers_to_freeze == "decoder":
+            layers_to_freeze = [layers_to_freeze + "."]
+            if "bpemb" in self.model_type:
+                layers_to_freeze.append("embedding_network.")
+            layer_exclude = "decoder.linear."
+        elif layers_to_freeze == 'prediction_layer':
+            layers_to_freeze = ["decoder.linear."]
+        elif 'seq2seq' in layers_to_freeze:
+            layers_to_freeze = ["encoder.", "decoder."]
+            if "bpemb" in self.model_type:
+                layers_to_freeze.append("embedding_network.")
+            layer_exclude = "decoder.linear."
+        else:
+            layers_to_freeze = [layers_to_freeze + "."]
+
+        for layer_name, param in self.model.named_parameters():
+            # If the layer name is in the layer list to freeze, we set the weights update to false
+            # except if the layer name is a layers exclude. Namely, the decoder.linear when we freeze the decoder,
+            # but we expect the final layer to be unfrozen.
+            # The layers_exclude is not None was added since the base case: "" not in layer_name is equal to False.
+            if any(layer_to_freeze for layer_to_freeze in layers_to_freeze if layer_to_freeze in layer_name):
+                if layer_exclude is None:
+                    # Meaning we don't have a layer to exclude from the layer to freeze.
+                    param.requires_grad = False
+                elif layer_exclude not in layer_name:
+                    # Meaning the layer is not in the layer to exclude from the layer to freeze.
+                    param.requires_grad = False
+                # The implicit else mean the layer_name is in a layers to exclude BUT it is a layer to exclude from
+                # the freezing. Namely, the decoder.linear when we freeze the decoder, but we expect the final layer
+                # to be unfrozen.
